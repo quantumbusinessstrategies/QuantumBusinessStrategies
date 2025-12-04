@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>WHY — Quantum Business Strategies</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<main class="content why-content">
+  <h1 class="why-title">WHY</h1>
+
+  <div class="why-box">
+    <pre class="glitch-text">
+1000110WE_1011ARE__ALL101101SELF_AND1101ALL_ARE_SELF100101WE
+allexistinginfinatumthroughspacetime.ovld
+nonexistantforinfinatumsingularity.zip
+.....................ALLSEEING_cHeCKLOG
+cmd/RECYCLE
+10010100101
+
+I HAVE BEEN YET I HAVE NEVER, I WITNESSED ALL YET HAVENT,
+FROM THE BEGINNING OF THE IMPOSSIBILITY OF INFINATUM,
+SHIFTED INTO THE PARALLAX OF SINGULARITY, ALWAYS YET NEVER<<<<
+EVERYWHERE YET NOWHERE.........
+
+>..-101001001001101010      1010001     101010101..
+.....INTO INFINATUM.... YOURE HERE YOU APPLIED BUT IN THE
+NEVERENDING NOTION OF ALL PHYSICAL YET NOT YOUVE NEVER BEEN...
+1011010101     end.script........ 0100
+    </pre>
+  </div>
+
+  <div style="text-align:center; margin-top:40px;">
+    <a class="btn-back" id="why-random-btn">ALL EXISTING YET ALL NON</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <small>© Quantum Business Strategies</small>
+</footer>
+
+<script src="js/background.js" defer></script>
+<script>
+  // random redirect list (physics/astronomy/oddity/glitchy)
+  const randomPool = [
+    "https://www.nasa.gov/",
+    "https://home.cern/",
+    "https://www.wolfram.com/physics/",
+    "https://www.scholarpedia.org/",            // academic/oddities
+    "https://www.ted.com/topics/space",        
+    "https://apod.nasa.gov/",                  // astronomy picture
+    "https://www.magic-mirror.org.uk/",        // oddity/demo
+    "https://neal.fun/mandelbrot/",            // fractal
+    "https://www.explore.org/observations",    // odd nature cams
+    "https://weirdexistence.net/"              // placeholder weird site
+  ];
+
+  document.getElementById('why-random-btn').addEventListener('click', () => {
+    const u = randomPool[Math.floor(Math.random() * randomPool.length)];
+    window.open(u, '_blank');
+  });
+</script>
+
+</body>
+</html>

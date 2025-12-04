@@ -1,1 +1,91 @@
+/* GENERAL RESET */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
+html, body {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    color: #fff;
+    font-family: 'VT323', monospace;
+}
+
+/* Centered main layout */
+.center-container {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    top: 20vh;
+}
+
+/* Title */
+.title-rainbow {
+    font-size: 3.6rem;
+    animation: rainbow 4s linear infinite;
+    letter-spacing: 3px;
+}
+
+/* Rainbow animation */
+@keyframes rainbow {
+  0% { color: #ff00ff; }
+  25% { color: #00ffff; }
+  50% { color: #00ff00; }
+  75% { color: #ffff00; }
+  100% { color: #ff00ff; }
+}
+
+/* Pixel Buttons */
+.button-wrap {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+}
+
+.pixel-btn {
+    padding: 18px 40px;
+    font-size: 1.4rem;
+    background: #111;
+    border: 3px solid #0ff;
+    color: #0ff;
+    text-shadow: 0 0 6px #0ff;
+    box-shadow: 0 0 20px #0ff;
+    transition: 0.2s;
+    display: inline-block;
+}
+
+.pixel-btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 35px #f0f;
+    border-color: #f0f;
+    color: #f0f;
+}
+
+/* Connect wallet */
+.wallet-wrap { margin-top: 40px; }
+
+.wallet-btn {
+    padding: 14px 30px;
+    font-size: 1.2rem;
+    background: #000;
+    color: #0f0;
+    border: 2px solid #0f0;
+    text-shadow: 0 0 6px #0f0;
+}
+
+#wallet-3d {
+    width: 300px;
+    height: 300px;
+    margin: 20px auto;
+    display: block;
+}
+
+/* Background canvas under everything */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -10;
+}

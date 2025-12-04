@@ -1,86 +1,78 @@
 // js/apply_bg.js
+// Rainbow neon binary Matrix with subtle circuit board background lines
+
 (() => {
   const canvas = document.getElementById('apply-bg');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
   let W = canvas.width = innerWidth;
   let H = canvas.height = innerHeight;
-  window.addEventListener('resize', ()=> { W = canvas.width = innerWidth; H = canvas.height = innerHeight; init(); });
+  window.addEventListener('resize', ()=>{ W = canvas.width = innerWidth; H = canvas.height = innerHeight; init(); });
 
-  // circuit board pattern generation (thin lines)
+  // circuitboard lines pre-render
   function drawCircuit(){
-    ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+    ctx.save();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0,0,W,H);
     ctx.lineWidth = 1;
-    // grid of lines
-    ctx.strokeStyle = 'rgba(20,200,30,0.12)';
-    for(let x=50;x<W;x+=120){
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
-    }
-    for(let y=40;y<H;y+=120){
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-    // some thin traces
-    ctx.strokeStyle = 'rgba(200,230,60,0.06)';
-    for(let i=0;i<40;i++){
+    for(let i=0;i<200;i++){
+      ctx.strokeStyle = i%2 ? 'rgba(60,200,80,0.06)' : 'rgba(200,200,80,0.03)';
       ctx.beginPath();
-      const sx = Math.random()*W, sy = Math.random()*H;
-      ctx.moveTo(sx, sy);
-      for(let j=0;j<4;j++){
-        ctx.lineTo(sx + (Math.random()-0.5)*200, sy + (Math.random()-0.5)*200);
-      }
+      const y = Math.random()*H;
+      ctx.moveTo(0,y);
+      ctx.bezierCurveTo(W*0.25, y + (Math.random()*200-100), W*0.75, y + (Math.random()*200-100), W, y + (Math.random()*40-20));
       ctx.stroke();
     }
+    ctx.restore();
   }
 
-  // binary rain config
-  const fontSize = Math.max(12, Math.floor(Math.min(W,H)/40));
-  let cols = Math.ceil(W / fontSize);
   let columns = [];
+  let fontSize = Math.max(12, Math.floor(Math.min(W,H) / 40));
+  let cols = Math.ceil(W / fontSize);
 
   function init(){
+    W = canvas.width = innerWidth;
+    H = canvas.height = innerHeight;
+    fontSize = Math.max(12, Math.floor(Math.min(W,H) / 40));
     cols = Math.ceil(W / fontSize);
     columns = [];
     for(let i=0;i<cols;i++){
-      columns[i] = { y: Math.random()*H, speed: 0.6 + Math.random()*1.4 };
+      columns[i] = { y: Math.random()*H, speed: 0.6 + Math.random()*1.6 };
     }
+    // pre-draw static circuitboard
     drawCircuit();
   }
 
   function hsvToRgb(h,s,v){
-    let r,g,b; const i=Math.floor(h*6), f=h*6 - i, p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
-    switch(i%6){ case 0: r=v; g=t; b=p; break; case 1: r=q; g=v; b=p; break; case 2: r=p; g=v; b=t; break; case 3: r=p; g=q; b=v; break; case 4: r=t; g=p; b=v; break; case 5: r=v; g=p; b=q; break; }
+    let r,g,b; const i = Math.floor(h*6); const f = h*6 - i; const p = v*(1-s); const q = v*(1-f*s); const t = v*(1-(1-f)*s);
+    switch(i%6){ case 0:r=v;g=t;b=p;break; case 1:r=q;g=v;b=p;break; case 2:r=p;g=v;b=t;break; case 3:r=p;g=q;b=v;break; case 4:r=t;g=p;b=v;break; default:r=v;g=p;b=q; }
     return `rgb(${Math.floor(r*255)},${Math.floor(g*255)},${Math.floor(b*255)})`;
   }
 
   function draw(t){
-    // background circuit board
-    drawCircuit();
-
-    // overlay semi-transparent black for contrast
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    // dark overlay to keep circuitboard visible
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
     ctx.fillRect(0,0,W,H);
 
-    ctx.font = `${fontSize}px monospace`;
     for(let i=0;i<cols;i++){
       const col = columns[i];
-      col.y += col.speed * fontSize * 0.9;
+      col.y += col.speed * fontSize * 0.45;
       if(col.y > H + 50) col.y = -Math.random()*200;
 
-      for(let k=0;k<Math.floor(H / fontSize / 1.8); k++){
-        const x = i * fontSize;
-        const y = col.y - k * fontSize * 1.08;
+      const x = i * fontSize;
+      for(let k=0;k<Math.floor(H / fontSize / 1.2); k++){
+        const y = col.y - k * fontSize * 1.02;
         if(y < -50 || y > H + 50) continue;
-        const c = Math.random() < 0.7 ? (Math.random() < 0.5 ? '0' : '1') : '.';
-        const hue = ((t*0.00012) + i*0.002 + k*0.001) % 1;
-        const color = hsvToRgb(hue, 0.9, 0.95);
+        const c = Math.random() < 0.7 ? (Math.random()<0.5?'0':'1') : '.';
+        const hue = ((t*0.0001) + i*0.002 + k*0.001) % 1;
+        const color = hsvToRgb(hue, 0.95, 0.9);
+        ctx.font = `${fontSize}px monospace`;
         ctx.fillStyle = color;
-        ctx.globalAlpha = 0.28 + Math.max(0, 0.6 - k*0.06);
+        ctx.globalAlpha = 0.25 + Math.max(0, 0.6 - k*0.06);
         ctx.fillText(c, x, y);
       }
-
-      if(Math.random() < 0.0025) columns[i].y = -Math.random()*200;
+      if(Math.random() < 0.002) columns[i].y = -Math.random()*200;
     }
-
     requestAnimationFrame(draw);
   }
 

@@ -190,4 +190,3 @@
 
   console.log('Safe sacred geometry background initialized.');
 })();
-

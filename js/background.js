@@ -1,211 +1,197 @@
 // js/background.js
-// Safe fullscreen fragment shader background (procedural rainbow sacred geometry + fractal)
-// Works on modern browsers; no external libs required
+// Safe but rich sacred-geometry + galaxy background (Three.js r128)
+// Works across browsers. No custom GLSL shaders to avoid compile errors.
 
 (function(){
-  const canvas = document.getElementById('background-canvas');
-  if(!canvas) return;
-  const gl = canvas.getContext('webgl', { antialias: true });
-  if(!gl){ console.error('WebGL not supported'); return; }
-
-  // size
-  function resize(){
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.floor(window.innerWidth * dpr);
-    canvas.height = Math.floor(window.innerHeight * dpr);
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    gl.viewport(0,0,canvas.width,canvas.height);
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  // shader helpers
-  const vs = `
-    attribute vec2 position;
-    varying vec2 vUv;
-    void main(){
-      vUv = position * 0.5 + 0.5;
-      gl_Position = vec4(position, 0.0, 1.0);
-    }
-  `;
-
-  const fs = `
-    precision mediump float;
-    uniform vec2 u_res;
-    uniform float u_time;
-    uniform int u_why;
-    varying vec2 vUv;
-
-    // hash / noise helpers
-    float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
-    float noise(vec2 p){
-      vec2 i = floor(p);
-      vec2 f = fract(p);
-      float a = hash(i);
-      float b = hash(i+vec2(1.0,0.0));
-      float c = hash(i+vec2(0.0,1.0));
-      float d = hash(i+vec2(1.0,1.0));
-      vec2 u = f*f*(3.0-2.0*f);
-      return mix(a,b,u.x) + (c-a)*u.y*(1.0-u.x) + (d-b)*u.x*u.y;
+  try {
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js missing - include r128');
+      return;
     }
 
-    // hsl to rgb
-    vec3 hsl2rgb(vec3 hsl){
-      float h = hsl.x, s = hsl.y, l = hsl.z;
-      float c = (1.0 - abs(2.0*l - 1.0)) * s;
-      float x = c * (1.0 - abs(mod(h*6.0,2.0)-1.0));
-      float m = l - c/2.0;
-      vec3 rgb;
-      if(h < 1.0/6.0) rgb = vec3(c,x,0.0);
-      else if(h < 2.0/6.0) rgb = vec3(x,c,0.0);
-      else if(h < 3.0/6.0) rgb = vec3(0.0,c,x);
-      else if(h < 4.0/6.0) rgb = vec3(0.0,x,c);
-      else if(h < 5.0/6.0) rgb = vec3(x,0.0,c);
-      else rgb = vec3(c,0.0,x);
-      return rgb + vec3(m);
+    // pick canvas
+    const canvas = document.getElementById('background-canvas') || (function(){
+      const c = document.createElement('canvas'); c.id='background-canvas'; document.body.appendChild(c); return c;
+    })();
+
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1.5, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 1);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.z = 220;
+
+    // scale multiplier (15% larger visuals)
+    const SCALE_MULT = 1.15;
+
+    // Particles (dust / stars)
+    const particleCount = 1400;
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+
+    for(let i=0;i<particleCount;i++){
+      const r = (Math.random()**0.8) * 420 * SCALE_MULT + 10;
+      const a = Math.random() * Math.PI * 2;
+      const x = Math.cos(a) * r;
+      const z = Math.sin(a) * r;
+      const y = (Math.random()-0.5) * 80 * SCALE_MULT;
+      positions[i*3] = x;
+      positions[i*3+1] = y;
+      positions[i*3+2] = z;
+
+      // initial color (will cycle)
+      colors[i*3] = 1.0;
+      colors[i*3+1] = 1.0;
+      colors[i*3+2] = 1.0;
     }
 
-    // hex grid mask
-    float hex(in vec2 p, float scale){
-      p *= scale;
-      vec2 q = abs(vec2(p.x*0.57735 + p.y*0.57735, p.y*1.1547));
-      return step(0.5, fract(q.x*2.0) + fract(q.y*2.0));
-    }
+    const pg = new THREE.BufferGeometry();
+    pg.setAttribute('position', new THREE.BufferAttribute(positions,3));
+    pg.setAttribute('color', new THREE.BufferAttribute(colors,3));
 
-    void main(){
-      vec2 uv = vUv;
-      vec2 center = vec2(0.5,0.5);
-      vec2 pos = (uv - center) * vec2(u_res.x/u_res.y,1.0);
+    const pMat = new THREE.PointsMaterial({
+      size: 1.8,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.92,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
 
-      // time
-      float t = u_time * 0.0006;
+    const points = new THREE.Points(pg, pMat);
+    scene.add(points);
 
-      // base galaxy noise
-      float n = 0.0;
-      vec2 p = pos * 0.4;
-      n += 0.6 * noise(p * 0.8 + t*0.2);
-      n += 0.3 * noise(p * 2.4 - t*0.25);
-      n += 0.12 * noise(p * 6.0 + vec2(t*0.6, -t*0.4));
-      n = smoothstep(0.08, 0.9, n);
+    // Sacred geometry: circles + hex grid lines
+    const lines = new THREE.Group();
+    scene.add(lines);
 
-      // radial falloff
-      float r = length(pos);
-      float galaxy = smoothstep(1.2, 0.1, r) * n;
-
-      // sacred geometry rings + hex overlay
-      float rings = 0.0;
-      float ringCount = 8.0;
-      for(float i=1.0;i<=8.0;i+=1.0){
-        float radius = 0.08 * i;
-        float d = abs(r - radius + 0.03*sin(t*0.5 + i*0.6 + pos.x*3.0));
-        float s = smoothstep(0.005, 0.0008, d);
-        rings += s * (1.0 - i*0.08);
+    function makeCircle(radius, seg=256){
+      const arr = new Float32Array((seg+1)*3);
+      for(let i=0;i<=seg;i++){
+        const t = (i/seg)*Math.PI*2;
+        arr[i*3] = Math.cos(t)*radius;
+        arr[i*3+1] = Math.sin(t)*radius;
+        arr[i*3+2] = 0;
       }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(arr,3));
+      const m = new THREE.LineBasicMaterial({ color: 0xffffff, transparent:true, opacity:0.9 });
+      return new THREE.Line(g,m);
+    }
 
-      // hex lattice subtle
-      float hexline = hex(uv * (1.0 + 0.5*sin(t*0.2)), 6.0);
-      float hexFade = smoothstep(0.33, 0.5, fract((uv.x+uv.y+ t*0.02)*3.0));
+    const baseR = 18 * SCALE_MULT;
+    for(let i=0;i<6;i++){
+      const theta = (i/6)*Math.PI*2;
+      const cx = Math.cos(theta)*baseR;
+      const cy = Math.sin(theta)*baseR;
+      const c = makeCircle(baseR,512);
+      c.position.set(cx,cy,0);
+      c.scale.set(3.6,3.6,1);
+      lines.add(c);
+    }
+    const big = makeCircle(baseR*3.3,1024); big.scale.set(1,1,1); lines.add(big);
 
-      // tiny particle flecks
-      float fleck = pow(max(0.0, 1.0 - r*3.0), 3.0) * (0.3 + 0.7 * hash(floor(uv.xy * 200.0 + t*10.0)));
-
-      // color base: rainbow shift by angle and time
-      float angle = atan(pos.y, pos.x) / 6.28318 + 0.5;
-      float hue = mod(angle + t*0.08 + (sin(r*6.0 + t*0.6)*0.03), 1.0);
-
-      // why-page tint
-      vec3 tint = vec3(1.0,1.0,1.0);
-      if(u_why == 1){
-        tint = vec3(0.6,0.7,1.0); // dismal blue/purple tone multiplier
+    // hex grid overlay
+    (function addHexGrid(radius, rings=5){
+      const coords = [];
+      const hex = radius;
+      for(let q=-rings;q<=rings;q++){
+        for(let r=-rings;r<=rings;r++){
+          const x = (Math.sqrt(3)*(q + r/2)) * hex * 0.65;
+          const y = (1.5*r) * hex * 0.65;
+          for(let s=0;s<6;s++){
+            const a1 = (s/6)*Math.PI*2;
+            const a2 = ((s+1)/6)*Math.PI*2;
+            coords.push(x + Math.cos(a1)*hex*0.24, y + Math.sin(a1)*hex*0.24, 0);
+            coords.push(x + Math.cos(a2)*hex*0.24, y + Math.sin(a2)*hex*0.24, 0);
+          }
+        }
       }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(coords,3));
+      const m = new THREE.LineBasicMaterial({ color:0xffffff, transparent:true, opacity:0.45 });
+      const lineseg = new THREE.LineSegments(g,m);
+      lineseg.position.z = -1.5;
+      lines.add(lineseg);
+    })(12 * SCALE_MULT, 6);
 
-      // combine channels
-      float glow = galaxy * 1.2 + rings * 0.95 + fleck * 0.9;
-      vec3 base = hsl2rgb(vec3(hue, 0.85, 0.5)) * glow;
+    // slight tilt / aesthetic
+    lines.rotation.x = 0.02;
+    lines.scale.set(3.4,3.4,1);
 
-      // chroma + soft vignette
-      float vign = smoothstep(1.2, 0.3, r);
-      vec3 color = base * tint * vign;
+    // animation variables
+    let last = performance.now();
+    let t = 0;
 
-      // add subtle hex overlay as glint
-      color += vec3(0.06,0.04,0.12) * hexline * hexFade * 0.9;
+    // update loop: color cycling & particle motion (safe)
+    function animate(){
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const dt = now - last;
+      last = now;
+      t += dt * 0.001;
 
-      // final tone mapping + saturation boost
-      color = pow(color, vec3(0.95));
-      gl_FragColor = vec4(color, 1.0);
+      // rotate geometry slowly
+      lines.rotation.z += 0.00045 * dt;
+
+      // color cycle
+      const hueBase = (t * 0.08) % 1;
+      lines.children.forEach((ch, idx) => {
+        if (ch.material) {
+          const h = (hueBase + idx*0.03) % 1;
+          ch.material.color.setHSL(h, 0.9, 0.6);
+          ch.material.opacity = 0.92 - idx*0.02;
+        }
+      });
+
+      // particles swirl toward center slightly and orbit
+      const pos = pg.getAttribute('position').array;
+      for (let i=0;i<particleCount;i++){
+        const ix = i*3;
+        let x = pos[ix], y = pos[ix+1], z = pos[ix+2];
+
+        // radial
+        const dx = -x*0.00002 * dt * (1 + 0.6*Math.exp(-Math.hypot(x,y,z)/120));
+        const dz = -z*0.00002 * dt * (1 + 0.6*Math.exp(-Math.hypot(x,y,z)/120));
+
+        // orbital tweak
+        const r = Math.sqrt(x*x + z*z) + 0.0001;
+        const ang = Math.atan2(z,x) + 0.0009 * dt * (1 + 80/(r+30));
+
+        pos[ix] = Math.cos(ang)*r + dx + (Math.random()-0.5)*0.2;
+        pos[ix+2] = Math.sin(ang)*r + dz + (Math.random()-0.5)*0.2;
+        pos[ix+1] += (Math.random()-0.5)*0.02 * (dt*0.002);
+      }
+      pg.getAttribute('position').needsUpdate = true;
+
+      // update particle colors: rainbow pulse
+      const cols = pg.getAttribute('color').array;
+      for(let i=0;i<particleCount;i++){
+        const h = (hueBase + (i/particleCount)*0.5) % 1;
+        const c = new THREE.Color(); c.setHSL(h, 0.9, 0.65);
+        cols[i*3]=c.r; cols[i*3+1]=c.g; cols[i*3+2]=c.b;
+      }
+      pg.getAttribute('color').needsUpdate = true;
+
+      renderer.render(scene, camera);
     }
-  `;
 
-  // compile shader helper
-  function createShader(gl, type, source){
-    const s = gl.createShader(type);
-    gl.shaderSource(s, source);
-    gl.compileShader(s);
-    if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)){
-      console.error('Shader compile error:', gl.getShaderInfoLog(s));
-      gl.deleteShader(s);
-      return null;
-    }
-    return s;
+    animate();
+
+    // handle resize
+    window.addEventListener('resize', ()=> {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    console.log('background.js loaded (safe sacred geometry).');
+
+  } catch(e){
+    console.error('background init error', e);
+    // fallback: ensure dark gradient
+    try { document.body.style.background = 'radial-gradient(circle at 50% 40%, #070719 0%, #000 60%)'; } catch(e){}
   }
-
-  const vert = createShader(gl, gl.VERTEX_SHADER, vs);
-  const frag = createShader(gl, gl.FRAGMENT_SHADER, fs);
-  if(!vert || !frag) return;
-
-  const prog = gl.createProgram();
-  gl.attachShader(prog, vert);
-  gl.attachShader(prog, frag);
-  gl.bindAttribLocation(prog, 0, "position");
-  gl.linkProgram(prog);
-  if(!gl.getProgramParameter(prog, gl.LINK_STATUS)){
-    console.error('Program link error:', gl.getProgramInfoLog(prog));
-    return;
-  }
-  gl.useProgram(prog);
-
-  // full screen triangle / quad
-  const quadBuf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
-  const verts = new Float32Array([
-    -1,-1,
-     1,-1,
-    -1, 1,
-    -1, 1,
-     1,-1,
-     1, 1
-  ]);
-  gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-  gl.enableVertexAttribArray(0);
-  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-
-  // uniforms
-  const u_res = gl.getUniformLocation(prog, 'u_res');
-  const u_time = gl.getUniformLocation(prog, 'u_time');
-  const u_why = gl.getUniformLocation(prog, 'u_why');
-
-  // animation
-  let start = performance.now();
-  function frame(){
-    const now = performance.now();
-    const t = now - start;
-    // update size if needed
-    if(canvas.width !== Math.floor(window.innerWidth * Math.min(window.devicePixelRatio||1,2)) ||
-       canvas.height !== Math.floor(window.innerHeight * Math.min(window.devicePixelRatio||1,2))){
-      resize();
-    }
-    gl.viewport(0,0,canvas.width,canvas.height);
-    gl.uniform2f(u_res, canvas.width, canvas.height);
-    gl.uniform1f(u_time, t);
-    // detect why page by body class
-    const isWhy = document.body.classList.contains('page-why') ? 1 : 0;
-    gl.uniform1i(u_why, isWhy);
-
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-
-  console.log('Safe fullscreen shader initialized.');
 })();

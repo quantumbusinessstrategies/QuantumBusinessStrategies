@@ -1,4 +1,3 @@
-
 // js/apply_bg.js - rainbow binary rain + circuit board lines
 (() => {
   const canvas = document.getElementById('apply-bg');

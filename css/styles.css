@@ -1,51 +1,53 @@
-/* -----------------------------------------------------
-   GLOBAL — Safe Shader + Black Background
------------------------------------------------------ */
+/* ===================================================================
+   GLOBAL FIX — BLACK BACKGROUND + SHADER ALWAYS VISIBLE
+=================================================================== */
 
-/* Page background stays black,
-   only content layers become transparent */
+/* Full page stays black */
 html, body {
-  height: 100%;
   margin: 0;
-  background: #000 !important;   /* BLACK restored */
+  height: 100%;
+  background: #000 !important;   /* <-- FIXED */
   overflow-x: hidden;
-  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color: #fff;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
-/* Content sections transparent so shaders show through */
-main, header, footer,
-.content, .why-content, .why-box {
+/* Shader canvas behind everything */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -10;
+  display: block;
+}
+
+/* Only CONTENT is transparent — NOT the whole page */
+.content, .why-content, .why-box,
+header, footer, main {
   background: transparent !important;
 }
 
-/* Canvas — ALWAYS behind everything */
-canvas {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
-  z-index: -30;
+/* Prevent random divs from blocking shader */
+section, article, div {
+  background-color: transparent !important;
 }
 
-/* -----------------------------------------------------
-   ROOT VARIABLES
------------------------------------------------------ */
-:root {
-  --accent-a:#00ffd5;
-  --accent-b:#ff6bf0;
-  --muted:#bfc6d6;
-  --glass: rgba(255,255,255,0.03);
-  --gold1:#ffd86b;
-  --gold2:#ffb400;
-  --max-width:1100px;
-}
+/* ===================================================================
+   FONTS
+=================================================================== */
 
-/* -----------------------------------------------------
-   HEADER + LAYOUT
------------------------------------------------------ */
+.vt { font-family: 'VT323', monospace; letter-spacing: 2px; }
+.orbitron { font-family: 'Orbitron', sans-serif; font-weight: 700; }
+.dot { font-family: 'DotGothic16', sans-serif; }
+.clock { font-family: 'Orbitron', sans-serif; color:#7bb0ff; }
+
+/* ===================================================================
+   LAYOUT
+=================================================================== */
+
 .site-header {
   position: fixed;
   top: 18px;
@@ -54,31 +56,25 @@ canvas {
 }
 
 .brand {
-  font-weight:700;
-  letter-spacing:2px;
-  font-size:14px;
-  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 14px;
+  color: #bfc6d6;
 }
 
 .content {
   position: relative;
   z-index: 100;
-  max-width: var(--max-width);
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 10vh 20px;
+  padding: 12vh 20px;
   text-align: center;
 }
 
-/* -----------------------------------------------------
-   TYPOGRAPHY (Your requested fonts)
------------------------------------------------------ */
-.vt { font-family: 'VT323', monospace; letter-spacing: 2px; }
-.orbitron { font-family: 'Orbitron', sans-serif; font-weight:700; }
-.dot { font-family: 'DotGothic16', sans-serif; }
+/* ===================================================================
+   HERO TEXT
+=================================================================== */
 
-/* -----------------------------------------------------
-   HERO + TAGLINE
------------------------------------------------------ */
 .hero {
   font-size: 2.6rem;
   margin: 12vh 0 8px;
@@ -88,87 +84,93 @@ canvas {
 }
 
 .tag {
-  color: rgba(255,255,255,0.78);
-  font-size:1.05rem;
-  margin-bottom: 30px;
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.75);
 }
 
-/* -----------------------------------------------------
-   BUTTONS (BASE)
------------------------------------------------------ */
-.cta-row {
-  display:flex;
-  gap:18px;
-  justify-content:center;
-  flex-wrap:wrap;
-}
+/* ===================================================================
+   BUTTONS
+=================================================================== */
 
+/* base */
 .btn, .btn-large {
-  display:inline-block;
-  border-radius:50px;
-  font-weight:800;
-  cursor:pointer;
-  transition: transform .2s, box-shadow .2s;
+  display: inline-block;
+  border-radius: 40px;
+  text-decoration: none;
+  font-weight: 800;
+  padding: 18px 40px;
+  cursor: pointer;
+  transition: transform 0.22s, box-shadow 0.22s;
 }
 
-/* -----------------------------------------------------
-   PAGE-SPECIFIC BUTTONS
------------------------------------------------------ */
-
-/* HOME — rainbow neon (VT323) */
+/* home — VT323 rainbow */
 .page-home .btn {
-  padding:18px 42px;
-  background: linear-gradient(45deg,#00ffd5,#ff6bf0,#0ff);
-  color:#000;
-  font-family:'VT323';
-  font-size:20px;
-  box-shadow:0 8px 80px rgba(0,255,213,0.06);
+  background: linear-gradient(45deg,#00ffd5,#ff6bf0);
+  color: #000;
+  box-shadow: 0 8px 80px rgba(0,255,213,0.06);
+  font-family: 'VT323';
+  font-size: 22px;
 }
-.page-home .btn:hover { transform:scale(1.06); }
+.page-home .btn:hover { transform: scale(1.07); }
 
-/* WHY — blue/purple buttons */
+/* why — deep blue metallic */
 .page-why .btn {
-  padding:18px 42px;
-  background: linear-gradient(45deg,#7b6bff,#4b3b8f);
-  color:#000;
+  background: linear-gradient(45deg,#5b7bff,#3b4b8f);
+  color: #000;
 }
 
-/* PACKAGES — gold shimmer (VT323) */
-.page-packages .btn,
-.page-packages .btn-large {
-  padding:22px 44px;
-  background: linear-gradient(45deg, var(--gold1), var(--gold2));
+/* packages — gold shimmer */
+.page-packages .btn {
+  background: linear-gradient(45deg,#ffd86b,#ffb400);
   color:#000;
-  font-family:'VT323';
-  box-shadow:0 12px 140px rgba(255,190,60,0.06);
+  font-family: 'VT323';
+  box-shadow: 0 10px 120px rgba(255,200,60,0.08);
 }
 
-/* APPLY — DotGothic (neon cyan) */
-.page-apply .btn,
-.page-apply .btn-large {
-  padding:22px 44px;
+/* apply — dot gothic */
+.page-apply .btn {
   background: linear-gradient(45deg,#9cf,#7ff);
   color:#000;
-  font-family:'DotGothic16';
+  font-family: 'DotGothic16';
 }
 
-/* -----------------------------------------------------
-   WHY PAGE DETAILS
------------------------------------------------------ */
-.why-title {
-  font-size:4rem;
-  margin-bottom:12px;
-  background: linear-gradient(90deg,#6b9cff,#4b3b8f);
-  -webkit-background-clip:text;
-  color:transparent;
-}
+/* ===================================================================
+   WHY PAGE TEXT BOX (transparent)
+=================================================================== */
 
-/* Transparent box so shader is visible */
 .why-box {
-  border:none !important;
-  padding:36px;
-  border-radius:12px;
-  margin:28px auto;
+  padding: 32px;
+  border-radius: 12px;
+  color: #cfeaff;
+  background: transparent !important;
+  border: none !important;
 }
 
 .glitch-text {
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+/* ===================================================================
+   FOOTER
+=================================================================== */
+
+.site-footer {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  color: rgba(255,255,255,0.45);
+  z-index: 100;
+  font-size: 12px;
+}
+
+/* ===================================================================
+   RESPONSIVE
+=================================================================== */
+
+@media (max-width: 640px) {
+  .hero { font-size: 1.8rem; }
+  .btn, .btn-large { padding: 12px 24px; font-size: 16px; }
+}

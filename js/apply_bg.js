@@ -1,81 +1,73 @@
 // js/apply_bg.js
-// Rainbow neon binary Matrix with subtle circuit board background lines
-
 (() => {
   const canvas = document.getElementById('apply-bg');
   if(!canvas) return;
   const ctx = canvas.getContext('2d');
-  let W = canvas.width = innerWidth;
-  let H = canvas.height = innerHeight;
-  window.addEventListener('resize', ()=>{ W = canvas.width = innerWidth; H = canvas.height = innerHeight; init(); });
+  let W = canvas.width = innerWidth, H = canvas.height = innerHeight;
+  window.addEventListener('resize', ()=>{ W=canvas.width=innerWidth; H=canvas.height=innerHeight; init(); });
 
-  // circuitboard lines pre-render
+  // draw circuit board faint lines
   function drawCircuit(){
-    ctx.save();
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0,0,W,H);
-    ctx.lineWidth = 1;
-    for(let i=0;i<200;i++){
-      ctx.strokeStyle = i%2 ? 'rgba(60,200,80,0.06)' : 'rgba(200,200,80,0.03)';
+    ctx.strokeStyle = 'rgba(20,200,20,0.08)'; ctx.lineWidth=1;
+    const gap = 28;
+    for(let x=0;x<W;x+=gap){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    }
+    for(let y=0;y<H;y+=gap){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    // some random thin traces
+    for(let i=0;i<120;i++){
       ctx.beginPath();
-      const y = Math.random()*H;
-      ctx.moveTo(0,y);
-      ctx.bezierCurveTo(W*0.25, y + (Math.random()*200-100), W*0.75, y + (Math.random()*200-100), W, y + (Math.random()*40-20));
+      ctx.moveTo(Math.random()*W, Math.random()*H);
+      ctx.lineTo(Math.random()*W, Math.random()*H);
+      ctx.strokeStyle = `rgba(180,240,80,0.04)`;
       ctx.stroke();
     }
-    ctx.restore();
   }
 
-  let columns = [];
-  let fontSize = Math.max(12, Math.floor(Math.min(W,H) / 40));
-  let cols = Math.ceil(W / fontSize);
-
+  let cols, fontSize, columns;
   function init(){
-    W = canvas.width = innerWidth;
-    H = canvas.height = innerHeight;
-    fontSize = Math.max(12, Math.floor(Math.min(W,H) / 40));
+    fontSize = Math.max(12, Math.floor(Math.min(W,H)/36));
     cols = Math.ceil(W / fontSize);
-    columns = [];
-    for(let i=0;i<cols;i++){
-      columns[i] = { y: Math.random()*H, speed: 0.6 + Math.random()*1.6 };
-    }
-    // pre-draw static circuitboard
-    drawCircuit();
+    columns = new Array(cols).fill(0).map(()=> ({ y: Math.random()*H, speed: 0.6+Math.random()*1.4 }));
   }
 
   function hsvToRgb(h,s,v){
-    let r,g,b; const i = Math.floor(h*6); const f = h*6 - i; const p = v*(1-s); const q = v*(1-f*s); const t = v*(1-(1-f)*s);
-    switch(i%6){ case 0:r=v;g=t;b=p;break; case 1:r=q;g=v;b=p;break; case 2:r=p;g=v;b=t;break; case 3:r=p;g=q;b=v;break; case 4:r=t;g=p;b=v;break; default:r=v;g=p;b=q; }
+    let r,g,b; const i=Math.floor(h*6); const f=h*6-i; const p=v*(1-s); const q=v*(1-f*s); const t=v*(1-(1-f)*s);
+    switch(i%6){ case 0: r=v; g=t; b=p; break; case 1: r=q; g=v; b=p; break; case 2: r=p; g=v; b=t; break; case 3: r=p; g=q; b=v; break; case 4: r=t; g=p; b=v; break; default: r=v; g=p; b=q; }
     return `rgb(${Math.floor(r*255)},${Math.floor(g*255)},${Math.floor(b*255)})`;
   }
 
   function draw(t){
-    // dark overlay to keep circuitboard visible
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(0,0,W,H);
+    // black base
+    ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
+    drawCircuit();
 
+    // translucent fade for trails
+    ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(0,0,W,H);
+
+    // draw columns
+    ctx.font = `${fontSize}px monospace`;
     for(let i=0;i<cols;i++){
       const col = columns[i];
-      col.y += col.speed * fontSize * 0.45;
-      if(col.y > H + 50) col.y = -Math.random()*200;
+      col.y += col.speed * fontSize * 0.6;
+      if(col.y > H + 100) col.y = -Math.random()*300;
 
-      const x = i * fontSize;
-      for(let k=0;k<Math.floor(H / fontSize / 1.2); k++){
-        const y = col.y - k * fontSize * 1.02;
-        if(y < -50 || y > H + 50) continue;
-        const c = Math.random() < 0.7 ? (Math.random()<0.5?'0':'1') : '.';
-        const hue = ((t*0.0001) + i*0.002 + k*0.001) % 1;
-        const color = hsvToRgb(hue, 0.95, 0.9);
-        ctx.font = `${fontSize}px monospace`;
-        ctx.fillStyle = color;
-        ctx.globalAlpha = 0.25 + Math.max(0, 0.6 - k*0.06);
-        ctx.fillText(c, x, y);
+      for(let k=0;k<Math.floor(H / fontSize / 1.4); k++){
+        const x = i*fontSize;
+        const y = col.y - k*fontSize*1.05;
+        if(y < -50 || y>H+50) continue;
+        const char = Math.random() < 0.7 ? (Math.random()<0.5?'0':'1') : (Math.random()<0.5?'.':'/');
+        const hue = ((t*0.00008) + i*0.002 + k*0.001) % 1;
+        ctx.fillStyle = hsvToRgb(hue,0.9,0.9);
+        ctx.globalAlpha = 0.22 + Math.max(0, 0.6 - k*0.06);
+        ctx.fillText(char, x, y);
       }
-      if(Math.random() < 0.002) columns[i].y = -Math.random()*200;
+      if(Math.random()<0.002) col.y = -Math.random()*400;
     }
     requestAnimationFrame(draw);
   }
 
-  init();
-  requestAnimationFrame(draw);
+  init(); requestAnimationFrame(draw);
 })();

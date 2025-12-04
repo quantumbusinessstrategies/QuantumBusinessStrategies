@@ -1,16 +1,14 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>WHY — Quantum Business Strategies</title>
-
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=DotGothic16&family=Orbitron:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="page-why">
 
-<!-- re-use same shader canvas id (script will detect page and scale) -->
 <canvas id="background-canvas"></canvas>
 
 <main class="content why-content">
@@ -37,29 +35,28 @@ NEVERENDING NOTION OF ALL PHYSICAL YET NOT YOUVE NEVER BEEN...
     </pre>
   </div>
 
-  <div style="text-align:center;margin-top:36px;">
+  <div style="text-align:center; margin-top:40px;">
     <a class="btn-back" id="why-random-btn">ALL EXISTING YET ALL NON</a>
   </div>
 </main>
 
-<footer class="site-footer">© Quantum Business Strategies</footer>
+<footer class="site-footer"><small>© Quantum Business Strategies</small></footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/background.js" defer></script>
 <script>
 const randomPool = [
   "https://www.nasa.gov/",
   "https://home.cern/",
+  "https://www.wolfram.com/physics/",
   "https://apod.nasa.gov/",
   "https://neal.fun/mandelbrot/",
-  "https://weirdexistence.net/",
-  "https://www.wolfram.com/physics/"
+  "https://weirdly.io/" 
 ];
-document.getElementById && document.getElementById('why-random-btn').addEventListener('click', ()=>{
+document.getElementById('why-random-btn').addEventListener('click', () => {
   const u = randomPool[Math.floor(Math.random()*randomPool.length)];
-  window.open(u,'_blank');
+  window.open(u, '_blank');
 });
 </script>
-
-<!-- reuse same background shader script; it auto-detects .page-why and scales + color palette -->
-<script src="js/background.js" defer></script>
 </body>
 </html>

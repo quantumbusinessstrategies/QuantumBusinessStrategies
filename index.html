@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Quantum Business Strategies</title>
 
 <!-- Fonts -->
@@ -12,11 +12,10 @@
 </head>
 <body class="page-home">
 
-<!-- Fullscreen shader canvas used by home + why -->
 <canvas id="background-canvas"></canvas>
 
 <header class="site-header">
-  <div class="brand vt">QUANTUM BUSINESS STRATEGIES</div>
+  <div class="brand">QUANTUM BUSINESS STRATEGIES</div>
 </header>
 
 <main class="content">
@@ -24,15 +23,18 @@
   <p class="tag">Proprietary superposition models · 20–40% deterministic profit uplift</p>
 
   <div class="cta-row">
-    <a class="btn" href="packages.html">EXPLORE PACKAGES</a>
-    <a class="btn btn-why" href="why.html">WHY</a>
-    <a class="btn btn-apply" href="apply.html">APPLY NOW</a>
+    <a class="btn vt" href="packages.html">EXPLORE PACKAGES</a>
+    <a class="btn btn-why vt" href="why.html">WHY</a>
+    <a class="btn btn-apply vt" href="apply.html">APPLY NOW</a>
   </div>
 </main>
 
-<footer class="site-footer">© Quantum Business Strategies</footer>
+<footer class="site-footer">
+  <small>© Quantum Business Strategies</small>
+</footer>
 
-<!-- background shader (safe fragment shader) -->
+<!-- Three.js r128 (stable) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/background.js" defer></script>
 </body>
 </html>

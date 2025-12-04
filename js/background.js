@@ -1,192 +1,156 @@
 // js/background.js
-// Layered sacred geometry + fractal-like visual + particle universe
-// No custom GLSL shaders — uses Three.js primitives and dynamic HSL color cycling
+// Safe multi-layer sacred-geometry + fractal-like galaxy background (no fragile fragment shaders)
+// Works with three.js r128 included in pages.
+
 (() => {
-  if (typeof THREE === 'undefined') {
-    console.error('Three.js not loaded. Include r128 before this script.');
-    return;
+  if (typeof THREE === 'undefined') return console.error('Three.js missing. Include r128.');
+
+  // Select canvas
+  let canvas = document.getElementById('background-canvas');
+  if (!canvas) {
+    canvas = document.createElement('canvas');
+    canvas.id = 'background-canvas';
+    document.body.appendChild(canvas);
   }
 
-  const page = document.body.getAttribute('data-page') || 'home';
-  const canvas = document.getElementById('background-canvas');
-
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas || undefined, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1.5, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setClearColor(0x000000, 1);
-
-  if (!canvas) {
-    const c = renderer.domElement;
-    c.id = 'background-canvas';
-    document.body.appendChild(c);
-  }
+  renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 3000);
-  camera.position.z = 320;
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+  camera.position.z = 160;
 
-  window.addEventListener('resize', () => {
+  window.addEventListener('resize', ()=> {
     renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
   });
 
-  // ---------- Helpers ----------
-  function mkLineCircle(radius, segments=256, color=0xffffff, opacity=0.9) {
-    const pts = [];
-    for (let i=0;i<=segments;i++){
-      const a = (i/segments)*Math.PI*2;
-      pts.push(new THREE.Vector3(Math.cos(a)*radius, Math.sin(a)*radius, 0));
+  // SCALE factor (15% larger)
+  const GLOBAL_SCALE = 1.15;
+
+  // === Particle Galaxy Layer ===
+  function createParticles(count, size, color) {
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count*3);
+    for (let i=0;i<count;i++){
+      const radius = (Math.random()**0.9) * (200 * GLOBAL_SCALE) + 10;
+      const ang = Math.random()*Math.PI*2;
+      pos[3*i] = Math.cos(ang)*radius;
+      pos[3*i+1] = (Math.random()-0.5)*60;
+      pos[3*i+2] = Math.sin(ang)*radius;
     }
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity });
-    return new THREE.Line(geo, mat);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      size: size,
+      color: color,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    return new THREE.Points(geo, mat);
   }
 
-  function mkHexGrid(size, rings=4, color=0xffffff, opacity=0.5) {
+  const bigStarLayer = createParticles(1800, 1.6, 0xffffff);
+  const smallStarLayer = createParticles(900, 1.0, 0xffffff);
+  bigStarLayer.rotation.x = 0.02;
+  smallStarLayer.rotation.x = -0.01;
+  scene.add(bigStarLayer);
+  scene.add(smallStarLayer);
+
+  // === Sacred Geometry Rings (flower-like) ===
+  const ringGroup = new THREE.Group();
+  ringGroup.scale.set(GLOBAL_SCALE, GLOBAL_SCALE, GLOBAL_SCALE);
+  scene.add(ringGroup);
+
+  function ring(radius, segments=256) {
+    const arr = new Float32Array((segments+1)*3);
+    for (let i=0;i<=segments;i++){
+      const a = (i/segments)*Math.PI*2;
+      arr[3*i] = Math.cos(a)*radius;
+      arr[3*i+1] = Math.sin(a)*radius;
+      arr[3*i+2] = 0;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    const m = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+    return new THREE.Line(g, m);
+  }
+
+  const BASE_R = 16;
+  for (let i=0;i<6;i++){
+    const r = ring(BASE_R*3.2);
+    const theta = (i/6)*Math.PI*2;
+    r.position.set(Math.cos(theta)*BASE_R*3.2*0.12, Math.sin(theta)*BASE_R*3.2*0.12, 0);
+    ringGroup.add(r);
+  }
+  const outer = ring(BASE_R*6);
+  ringGroup.add(outer);
+
+  // hex grid (line segments)
+  function addHexGrid(radius, rings=5) {
     const coords = [];
-    for (let q=-rings;q<=rings;q++){
-      for (let r=-rings;r<=rings;r++){
-        const x = (Math.sqrt(3)*(q + r/2)) * size;
-        const y = (1.5 * r) * size;
+    const hexSize = radius;
+    for (let q=-rings;q<=rings;q++) {
+      for (let r=-rings;r<=rings;r++) {
+        const x = (Math.sqrt(3)*(q + r/2)) * hexSize * 0.5;
+        const y = (1.5 * r) * hexSize * 0.5;
         for (let s=0;s<6;s++){
           const a1 = (s/6)*Math.PI*2;
           const a2 = ((s+1)/6)*Math.PI*2;
-          coords.push(x + Math.cos(a1)*size*0.45, y + Math.sin(a1)*size*0.45, 0);
-          coords.push(x + Math.cos(a2)*size*0.45, y + Math.sin(a2)*size*0.45, 0);
+          coords.push(x + Math.cos(a1)*hexSize*0.25, y + Math.sin(a1)*hexSize*0.25, 0);
+          coords.push(x + Math.cos(a2)*hexSize*0.25, y + Math.sin(a2)*hexSize*0.25, 0);
         }
       }
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(coords, 3));
-    const mat = new THREE.LineBasicMaterial({ color: color, transparent: true, opacity: opacity });
-    return new THREE.LineSegments(geo, mat);
+    const mat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+    const lines = new THREE.LineSegments(geo, mat);
+    lines.position.z = -1.5;
+    ringGroup.add(lines);
   }
+  addHexGrid(10, 6);
 
-  // ---------- Layered sacred geometry group ----------
-  const sacred = new THREE.Group();
-  scene.add(sacred);
+  // subtle depth tilt
+  ringGroup.rotation.x = 0.02;
 
-  const baseR = 12;
-  // Flower-of-life rings
-  for (let i=0;i<7;i++){
-    const c = mkLineCircle(baseR * (i+1) * 1.8, 256, 0xffffff, 0.9 - i*0.08);
-    c.rotation.x = 0.03 * (i%2?1:-1);
-    c.position.z = -i*2;
-    c.scale.set(1.0 + i*0.02, 1.0 + i*0.02, 1);
-    sacred.add(c);
-  }
+  // === Animation ===
+  let last = performance.now();
+  function animate() {
+    const now = performance.now();
+    const dt = now - last;
+    last = now;
 
-  // overlapping petal circles
-  for (let j=0;j<6;j++){
-    const theta = (j/6)*Math.PI*2;
-    const cx = Math.cos(theta)*baseR*2.2;
-    const cy = Math.sin(theta)*baseR*2.2;
-    const pet = mkLineCircle(baseR*2.2, 192, 0xffffff, 0.85);
-    pet.position.set(cx, cy, -6);
-    pet.scale.set(1.1,1.1,1);
-    sacred.add(pet);
-  }
+    // rotate layers
+    bigStarLayer.rotation.y += 0.0004 * (1 + Math.sin(now*0.0002)*0.3);
+    smallStarLayer.rotation.y -= 0.00025 * (1 + Math.cos(now*0.00015)*0.2);
 
-  // hex grid overlay
-  const hex = mkHexGrid(8, 6, 0xffffff, 0.45);
-  hex.position.z = -10;
-  sacred.add(hex);
-
-  // nested icosahedrons to create fractal feel (wireframe)
-  const icoGroup = new THREE.Group();
-  for (let s=0;s<5;s++){
-    const size = 10 + s*8;
-    const g = new THREE.IcosahedronGeometry(size, 0);
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08 + (0.12 * (5-s)) });
-    const mesh = new THREE.Mesh(g, mat);
-    mesh.rotation.x = Math.random()*0.4;
-    mesh.rotation.y = Math.random()*0.4;
-    mesh.position.z = -20 - s*6;
-    icoGroup.add(mesh);
-  }
-  sacred.add(icoGroup);
-
-  // ---------- Particles (dust / stars) ----------
-  const particleCount = 1800;
-  const partPos = new Float32Array(particleCount * 3);
-  for (let i=0;i<particleCount;i++){
-    const r = Math.random()*900;
-    const theta = Math.random()*Math.PI*2;
-    const y = (Math.random()-0.5)*700;
-    partPos[i*3] = Math.cos(theta)*r;
-    partPos[i*3+1] = y;
-    partPos[i*3+2] = Math.sin(theta)*r;
-  }
-  const pGeo = new THREE.BufferGeometry();
-  pGeo.setAttribute('position', new THREE.BufferAttribute(partPos, 3));
-  const pMat = new THREE.PointsMaterial({ size: 1.2, color: 0xffffff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
-  const points = new THREE.Points(pGeo, pMat);
-  points.position.z = -80;
-  scene.add(points);
-
-  // ---------- Color cycling parameters ----------
-  let clock = 0;
-  const paletteSpeed = (page === 'why') ? 0.002 : 0.008; // why slower/desaturated
-  const baseSat = (page === 'why') ? 0.35 : 0.95;
-  const baseLight = (page === 'why') ? 0.45 : 0.55;
-
-  // make function to convert hsl -> THREE.Color
-  function hslToColor(h, s, l){ const c = new THREE.Color(); c.setHSL(h, s, l); return c; }
-
-  // ---------- Animation ----------
-  function animate(){
-    requestAnimationFrame(animate);
-    clock += 1;
-
-    // global rotation / expansion feel for homepage
-    sacred.rotation.z += 0.0009;
-    sacred.rotation.x = Math.sin(clock*0.00012)*0.02;
-    icoGroup.children.forEach((m,idx)=>{ m.rotation.y += 0.0004 + idx*0.00012; m.rotation.x += 0.0002; });
-
-    // particle sweep (gentle inward spiral)
-    const pos = pGeo.attributes.position.array;
-    for (let i=0;i<particleCount;i++){
-      const idx = i*3;
-      // rotate around center slowly
-      const x = pos[idx], y = pos[idx+1], z = pos[idx+2];
-      const ang = Math.atan2(z,x) + 0.00012;
-      const r = Math.sqrt(x*x + z*z);
-      pos[idx] = Math.cos(ang) * r;
-      pos[idx+2] = Math.sin(ang) * r;
-      // slight bob
-      pos[idx+1] = y + Math.sin((i + clock*0.001) * 0.002) * 0.05;
-    }
-    pGeo.attributes.position.needsUpdate = true;
-
-    // Rainbow color cycling across line objects
-    const timeHue = (clock * paletteSpeed * 0.0007) % 1;
-    sacred.children.forEach((child, i) => {
-      if (child.material) {
-        const hue = (timeHue + i*0.06) % 1;
-        const sat = baseSat;
-        const lig = baseLight;
-        child.material.color = hslToColor(hue, sat, lig);
-        child.material.opacity = Math.max(0.12, child.material.opacity);
+    // pulsating rainbow on ringGroup
+    ringGroup.children.forEach((ch, idx) => {
+      if (ch.material) {
+        const hue = (now*0.00008 + idx*0.08) % 1;
+        ch.material.color.setHSL(hue, 0.9, 0.6);
+        ch.material.opacity = 0.85 - idx*0.03;
       }
     });
-    icoGroup.children.forEach((m, i) => {
-      m.material.color = hslToColor((timeHue + i*0.03)%1, baseSat*0.6, baseLight*0.9);
-    });
-    points.material.color = hslToColor((timeHue + 0.2) % 1, baseSat*0.7, baseLight*0.95);
 
-    // gentle camera zoom pulse for expansive effect
-    camera.position.z = 300 + Math.sin(clock*0.00035) * 18;
+    // camera gentle zoom / parallax
+    camera.position.z = 150 + 6 * Math.sin(now*0.0002);
 
     renderer.render(scene, camera);
+    requestAnimationFrame(animate);
   }
 
   animate();
 
-  // pause when not visible
+  // Pause on hidden tab
   document.addEventListener('visibilitychange', () => {
-    // nothing heavy required; animation loop will auto-stop when tab hidden in many browsers
+    if (document.hidden) renderer.setAnimationLoop(null);
+    else requestAnimationFrame(animate);
   });
 
-  console.log('Background fractal-sacred loaded for page:', page);
 })();

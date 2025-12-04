@@ -1,4 +1,3 @@
-
 // js/packages_bg.js - pixel ocean of coins (lightweight canvas2D)
 (() => {
   const canvas = document.getElementById('pkg-bg');

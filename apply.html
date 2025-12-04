@@ -1,31 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Apply — Quantum Business Strategies</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
-<body data-page="apply">
+<body>
 
 <canvas id="apply-bg"></canvas>
 
-<main class="content">
-  <h1 class="hero">APPLY</h1>
+<main class="content page-apply">
+  <h1 class="hero dot">APPLY</h1>
   <p class="tag">Applications are being prepared. Placeholder interactive page live.</p>
 
   <div class="center-block">
-    <a class="btn-large" id="apply-soon">SOON?</a>
+    <a class="btn-large apply" id="apply-soon">SOON?</a>
   </div>
 </main>
 
-<footer class="site-footer"><small>© Quantum Business Strategies</small></footer>
+<footer class="site-footer">© Quantum Business Strategies</footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="js/apply_bg.js" defer></script>
 <script>
-  document.getElementById('apply-soon').addEventListener('click', ()=> { window.location.href = '/'; });
+document.getElementById('apply-soon').addEventListener('click', ()=>{ window.location.href = '/'; });
 </script>
 </body>
 </html>

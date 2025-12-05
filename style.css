@@ -1,122 +1,81 @@
-/* RESET */
-body {
-  margin: 0;
-  overflow: hidden;
-  background: black;
-  font-family: 'Press Start 2P', monospace;
-}
+/* basic reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html,body,#app-root { height: 100%; width: 100%; background: #000; color: #fff; font-family: 'Silkscreen', monospace, monospace; }
 
-/* SCREENS */
-.screen {
-  position: absolute;
-  inset: 0;
-  display: none;
-}
-.screen.active {
-  display: block;
-}
+/* mount area */
+.mount { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
 
-/* 3D MOUNT */
-.mount {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
+/* screens (single-page sections) */
+.screen { display: none; width:100%; height:100%; position: absolute; inset:0; }
+.screen.active { display:block; }
 
-/* TITLE */
+/* title */
 .title {
   position: absolute;
-  top: 80px;
+  top: 35%;
   width: 100%;
   text-align: center;
-  z-index: 5;
-  letter-spacing: 4px;
-  font-size: 38px;
-  font-weight: bold;
-  color: white;
-}
-
-/* rainbow each letter */
-.title span {
-  display: inline-block;
-  animation: hueShift 2s infinite linear;
-}
-
-@keyframes hueShift {
-  from { filter: hue-rotate(0deg); }
-  to   { filter: hue-rotate(360deg); }
-}
-
-/* BUTTONS */
-.bottom-buttons {
-  position: absolute;
-  bottom: 80px;
-  width: 100%;
-  text-align: center;
-  z-index: 5;
-}
-
-.pixel-button {
-  margin: 0 25px;
-  padding: 22px 40px;
-  font-size: 22px;
-  border: 4px solid #fff;
-  background: #000;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 0 10px #fff;
-  transition: 0.15s;
-}
-
-.pixel-button:hover {
-  background: #111;
-  box-shadow: 0 0 18px #fff;
-}
-
-/* PLACEHOLDER SCREENS */
-.placeholder {
-  position: absolute;
-  top: 40%;
-  width: 100%;
-  text-align: center;
-  color: white;
-}
-
-.back-btn {
-  margin-top: 30px;
-  padding: 18px 32px;
-  font-size: 20px;
-  border: 4px solid white;
-  background: black;
-  color: white;
-  cursor: pointer;
-}
-
-/* TV OVERLAY */
-#tv-overlay {
   pointer-events: none;
-  position: absolute;
-  inset: 0;
+  text-shadow: 0 0 8px #ff00ff, 0 0 16px #00ffff, 0 0 24px #ffff00;
+  filter: drop-shadow(0 0 6px #ff00ff);
+  font-size: 48px;
+  font-weight: bold;
+  letter-spacing: -2px;
   z-index: 10;
 }
 
-#tv-anim {
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle, transparent 70%, rgba(255,255,255,0.1));
+/* per-letter rainbow animation */
+@keyframes letterHue {
+  0% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(140deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+.title span { display:inline-block; animation: letterHue 2.4s linear infinite; }
+
+/* bottom buttons (15% larger than original) */
+.bottom-buttons { position: absolute; left: 50%; transform: translateX(-50%); bottom: 96px; display:flex; gap:18px; z-index:10; }
+.pixel-button {
+  font-family: 'Silkscreen', monospace;
+  padding: 14px 23px;
+  font-size: 23px; /* 15% larger than 20px */
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  color: #fff;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: transform .12s ease, background .12s ease;
+}
+.pixel-button:hover { transform: translateY(-3px); background: rgba(255,255,255,0.14); }
+
+/* tv overlay */
+#tv-overlay { position:absolute; top:20px; left:20px; width:220px; height:160px; image-rendering: pixelated; border:4px solid #fff; background:black; overflow:hidden; z-index:20; box-shadow:0 0 12px #0ff, 0 0 22px #f0f; }
+#tv-anim { width:100%; height:100%; background-size:cover; animation: tvCycle 2.6s steps(1) infinite; }
+
+/* ticker */
+#quantum-ticker {
+  position: fixed; bottom: 0; left: 0; width: 100%; height: 34px;
+  background: rgba(100,150,255,0.35); color: yellow; font-family: monospace; font-size: 16px;
+  white-space: nowrap; overflow: hidden; pointer-events:none; z-index:999999;
+}
+#quantum-ticker .text { display:inline-block; padding-left:0.6%; }
+
+/* placeholder pages */
+.placeholder { height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; background:#000; color:#fff; }
+.back-btn { padding:12px 18px; font-family:monospace; cursor:pointer; }
+
+/* responsive adjustments */
+@media (max-width: 720px) {
+  .title { font-size: 28px; }
+  .pixel-button { font-size: 18px; padding: 12px 18px; }
 }
 
-/* GLOBAL TICKER */
-#quantum-ticker {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: white;
-  font-size: 16px;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  z-index: 20;
+/* subtle helper animations */
+@keyframes tvCycle {
+  0% { background-image: url('https://dummyimage.com/220x160/000/0ff.png&text=STATIC'); }
+  33% { background-image: url('https://dummyimage.com/220x160/111/f0f.png&text=GHOST'); }
+  66% { background-image: url('https://dummyimage.com/220x160/222/ff0.png&text=CARTOON'); }
+  100% { background-image: url('https://dummyimage.com/220x160/000/0ff.png&text=STATIC'); }
 }
+
+/* small utility */
+.hide { display:none!important; }

@@ -5,34 +5,36 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quantum Business Strategies</title>
   <link rel="stylesheet" href="style.css" />
-
-  <!-- THREE.js -->
+  <!-- three.js via CDN -->
   <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/EffectComposer.js" type="module"></script>
+  <script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/RenderPass.js" type="module"></script>
+  <script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/UnrealBloomPass.js" type="module"></script>
 </head>
-
 <body>
+  <!-- pages / sections -->
   <div id="app-root">
-    <!-- HOME SCREEN -->
     <div id="screen-home" class="screen active">
+      <!-- 3D mount -->
       <div id="mount" class="mount"></div>
 
-      <!-- TITLE -->
+      <!-- Title (letters individually animated) -->
       <div id="title" class="title" aria-hidden="true"></div>
 
-      <!-- BOTTOM BUTTONS -->
+      <!-- bottom buttons -->
       <div class="bottom-buttons">
         <button class="pixel-button" data-target="apply">Apply</button>
         <button class="pixel-button" data-target="packages">Packages</button>
         <button class="pixel-button" data-target="why">Why</button>
       </div>
 
-      <!-- TV OVERLAY -->
+      <!-- TV overlay -->
       <div id="tv-overlay">
-        <div id="tv-anim"></div>
+        <div id="tv-anim" />
       </div>
     </div>
 
-    <!-- APPLY SCREEN -->
+    <!-- placeholder screens -->
     <div id="screen-apply" class="screen">
       <div class="placeholder">
         <h1>Apply</h1>
@@ -40,7 +42,6 @@
       </div>
     </div>
 
-    <!-- PACKAGES SCREEN -->
     <div id="screen-packages" class="screen">
       <div class="placeholder">
         <h1>Packages</h1>
@@ -48,7 +49,6 @@
       </div>
     </div>
 
-    <!-- WHY SCREEN -->
     <div id="screen-why" class="screen">
       <div class="placeholder">
         <h1>Why</h1>
@@ -57,10 +57,9 @@
     </div>
   </div>
 
-  <!-- GLOBAL TICKER -->
+  <!-- ticker (global) -->
   <div id="quantum-ticker" aria-hidden="true"></div>
 
-  <!-- MAIN SCRIPT (MUST BE LAST) -->
   <script type="module" src="main.js"></script>
 </body>
 </html>

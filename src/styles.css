@@ -1,0 +1,12 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Silkscreen', monospace;
+}
+
+.pixel-button {
+  image-rendering: pixelated;
+  cursor: pointer;
+}

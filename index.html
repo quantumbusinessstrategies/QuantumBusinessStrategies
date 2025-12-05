@@ -1,22 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quantum Business Strategies</title>
-  <link href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- THREE.js -->
+  <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+  <script type="module" src="main.js"></script>
 </head>
+
 <body>
-  <div id="container">
-    <h1 id="title"><span>Q</span>UANTUM <span>B</span>USINESS <span>S</span>TRATEGIES</h1>
-    <div id="buttons">
-      <button class="pixel-button" onclick="navigate('apply')">APPLY NOW</button>
-      <button class="pixel-button" onclick="navigate('packages')">VIEW PACKAGES</button>
-      <button class="pixel-button" onclick="navigate('why')">WHY US</button>
+  <div id="app-root">
+    <!-- HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+      <div id="mount" class="mount"></div>
+
+      <!-- TITLE -->
+      <div id="title" class="title" aria-hidden="true"></div>
+
+      <!-- BOTTOM BUTTONS -->
+      <div class="bottom-buttons">
+        <button class="pixel-button" data-target="apply">Apply</button>
+        <button class="pixel-button" data-target="packages">Packages</button>
+        <button class="pixel-button" data-target="why">Why</button>
+      </div>
+
+      <!-- TV OVERLAY -->
+      <div id="tv-overlay">
+        <div id="tv-anim"></div>
+      </div>
+    </div>
+
+    <!-- APPLY SCREEN -->
+    <div id="screen-apply" class="screen">
+      <div class="placeholder">
+        <h1>Apply</h1>
+        <button class="back-btn">BACKTOMOTHERSHIP</button>
+      </div>
+    </div>
+
+    <!-- PACKAGES SCREEN -->
+    <div id="screen-packages" class="screen">
+      <div class="placeholder">
+        <h1>Packages</h1>
+        <button class="back-btn">BACKTOMOTHERSHIP</button>
+      </div>
+    </div>
+
+    <!-- WHY SCREEN -->
+    <div id="screen-why" class="screen">
+      <div class="placeholder">
+        <h1>Why</h1>
+        <button class="back-btn">BACKTOMOTHERSHIP</button>
+      </div>
     </div>
   </div>
 
-  <script type="module" src="main.js"></script>
+  <!-- GLOBAL TICKER -->
+  <div id="quantum-ticker" aria-hidden="true"></div>
 </body>
 </html>

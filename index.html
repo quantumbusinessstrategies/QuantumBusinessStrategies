@@ -1,51 +1,61 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quantum Business Strategies</title>
-  <link rel="stylesheet" href="style.css" />
-  <script type="module" src="main.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Quantum Business Strategies</title>
+<link rel="stylesheet" href="style.css" />
+<!-- three.js via CDN-->
+<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
+EffectComposer.js" type="module"></script>
+<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
+RenderPass.js" type="module"></script>
+<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
+UnrealBloomPass.js" type="module"></script>
 </head>
 <body>
-  <div id="app-root">
-    <div id="screen-home" class="screen active">
-      <div id="mount" class="mount"></div>
-      <div id="title" class="title" aria-hidden="true"></div>
-
-      <div class="bottom-buttons">
-        <button class="pixel-button" data-target="apply">Apply</button>
-        <button class="pixel-button" data-target="packages">Packages</button>
-        <button class="pixel-button" data-target="why">Why</button>
-      </div>
-
-      <div id="tv-overlay">
-        <div id="tv-anim"></div>
-      </div>
-    </div>
-
-    <div id="screen-apply" class="screen">
-      <div class="placeholder">
-        <h1>Apply</h1>
-        <button class="back-btn">BACKTOMOTHERSHIP</button>
-      </div>
-    </div>
-
-    <div id="screen-packages" class="screen">
-      <div class="placeholder">
-        <h1>Packages</h1>
-        <button class="back-btn">BACKTOMOTHERSHIP</button>
-      </div>
-    </div>
-
-    <div id="screen-why" class="screen">
-      <div class="placeholder">
-        <h1>Why</h1>
-        <button class="back-btn">BACKTOMOTHERSHIP</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="quantum-ticker" aria-hidden="true"></div>
+<!-- pages / sections-->
+<div id="app-root">
+<div id="screen-home" class="screen active">
+<!-- 3D mount-->
+<div id="mount" class="mount"></div>
+<!-- Title (letters individually animated)-->
+<div id="title" class="title" aria-hidden="true"></div>
+<!-- bottom buttons-->
+<div class="bottom-buttons">
+<button class="pixel-button" data-target="apply">Apply</button>
+<button class="pixel-button" data-target="packages">Packages</button>
+<button class="pixel-button" data-target="why">Why</button>
+</div>
+<!-- TV overlay-->
+1
+<div id="tv-overlay">
+<div id="tv-anim"></div>
+</div>
+</div>
+<!-- placeholder screens-->
+<div id="screen-apply" class="screen">
+<div class="placeholder">
+<h1>Apply</h1>
+<button class="back-btn">BACKTOMOTHERSHIP</button>
+</div>
+</div>
+<div id="screen-packages" class="screen">
+<div class="placeholder">
+<h1>Packages</h1>
+<button class="back-btn">BACKTOMOTHERSHIP</button>
+</div>
+</div>
+<div id="screen-why" class="screen">
+<div class="placeholder">
+<h1>Why</h1>
+<button class="back-btn">BACKTOMOTHERSHIP</button>
+</div>
+</div>
+</div>
+<!-- ticker (global)-->
+<div id="quantum-ticker" aria-hidden="true"></div>
+<script type="module" src="main.js"></script>
 </body>
 </html>

@@ -1,61 +1,204 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Quantum Business Strategies</title>
-<link rel="stylesheet" href="style.css" />
-<!-- three.js via CDN-->
-<script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
-EffectComposer.js" type="module"></script>
-<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
-RenderPass.js" type="module"></script>
-<script src="https://unpkg.com/three@0.158.0/examples/jsm/postprocessing/
-UnrealBloomPass.js" type="module"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Business Strategies</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; font-family: 'Silkscreen', monospace; }
+    #container { position: relative; width: 100vw; height: 100vh; }
+    #title {
+      position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
+      font-size: clamp(32px, 5vw, 48px); font-weight: bold; letter-spacing: -2px;
+      text-align: center; pointer-events: none;
+      text-shadow: 0 0 8px #ff00ff, 0 0 16px #00ffff, 0 0 24px #ffff00, 0 0 32px #ff00ff;
+      filter: drop-shadow(0 0 6px #ff00ff);
+      animation: rainbowShift 6s linear infinite;
+      z-index: 10;
+    }
+    #buttons {
+      position: absolute; bottom: 96px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 18px; z-index: 10;
+    }
+    @keyframes rainbowShift {
+      0% { color: #ff0000; } 20% { color: #ff00ff; } 40% { color: #00ffff; }
+      60% { color: #00ff00; } 80% { color: #ffff00; } 100% { color: #ff0000; }
+    }
+    .pixel-button {
+      font-size: 1.2em; font-family: 'Silkscreen', monospace; padding: 14px 28px;
+      border: 3px solid #fff; background: #111; color: white; cursor: pointer;
+      box-shadow: 0 0 20px rgba(255,0,255,0.4);
+    }
+    #zoomControl {
+      position: absolute; top: 16px; right: 16px; z-index: 20;
+      background: rgba(0,0,0,0.45); padding: 10px; border-radius: 8px;
+    }
+  </style>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&display=swap">
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.164.0/build/three.module.js" } }
+  </script>
 </head>
 <body>
-<!-- pages / sections-->
-<div id="app-root">
-<div id="screen-home" class="screen active">
-<!-- 3D mount-->
-<div id="mount" class="mount"></div>
-<!-- Title (letters individually animated)-->
-<div id="title" class="title" aria-hidden="true"></div>
-<!-- bottom buttons-->
-<div class="bottom-buttons">
-<button class="pixel-button" data-target="apply">Apply</button>
-<button class="pixel-button" data-target="packages">Packages</button>
-<button class="pixel-button" data-target="why">Why</button>
-</div>
-<!-- TV overlay-->
-1
-<div id="tv-overlay">
-<div id="tv-anim"></div>
-</div>
-</div>
-<!-- placeholder screens-->
-<div id="screen-apply" class="screen">
-<div class="placeholder">
-<h1>Apply</h1>
-<button class="back-btn">BACKTOMOTHERSHIP</button>
-</div>
-</div>
-<div id="screen-packages" class="screen">
-<div class="placeholder">
-<h1>Packages</h1>
-<button class="back-btn">BACKTOMOTHERSHIP</button>
-</div>
-</div>
-<div id="screen-why" class="screen">
-<div class="placeholder">
-<h1>Why</h1>
-<button class="back-btn">BACKTOMOTHERSHIP</button>
-</div>
-</div>
-</div>
-<!-- ticker (global)-->
-<div id="quantum-ticker" aria-hidden="true"></div>
-<script type="module" src="main.js"></script>
+  <div id="container">
+    <div id="zoomControl">
+      <label style="color:white;font-size:12px">ZOOM</label>
+      <input id="zoomSlider" type="range" min="3" max="14" step="0.1" value="6.4" />
+    </div>
+    <div id="title">QUANTUM BUSINESS STRATEGIES</div>
+    <div id="buttons">
+      <button class="pixel-button">APPLY NOW</button>
+      <button class="pixel-button">VIEW PACKAGES</button>
+      <button class="pixel-button">WHY US</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const container = document.getElementById('container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 6.4;
+
+    let targetZoom = camera.position.z;
+    document.getElementById('zoomSlider').addEventListener('input', e => {
+      targetZoom = parseFloat(e.target.value);
+    });
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    // Galaxy particles
+    const count = 20000;
+    const pos = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const r = Math.random() * 8;
+      const a = Math.random() * Math.PI * 2;
+      pos[i * 3] = Math.cos(a) * r;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 2;
+      pos[i * 3 + 2] = Math.sin(a) * r;
+      const c = new THREE.Color().setHSL(i / count, 1.0, 0.6);
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({ vertexColors: true, size: 0.02, blending: THREE.AdditiveBlending, transparent: true });
+    const points = new THREE.Points(geo, mat);
+    scene.add(points);
+
+    // === Falling rainbow binary ===
+    const binGroup = new THREE.Group();
+    scene.add(binGroup);
+    const binCount = 600;
+    const binSprites = [];
+    for (let i = 0; i < binCount; i++) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 32; canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '24px monospace';
+      const ch = Math.random() > 0.5 ? '1' : '0';
+      const hue = Math.random();
+      ctx.fillStyle = `hsl(${hue*360},100%,60%)`;
+      ctx.fillText(ch, 4, 24);
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+      const spr = new THREE.Sprite(mat);
+      // push binary 10% farther back in Z
+      spr.position.set((Math.random()-0.5)*12, Math.random()*8+4, (Math.random()-0.5)*13.2);
+      // make binary 10% smaller overall
+      spr.scale.set(0.315, 0.315, 0.315);
+      spr.userData.speed = 0.01 + Math.random()*0.03;
+      binGroup.add(spr);
+      binSprites.push(spr);
+    }
+
+    // === Wireframes (unaffected by lens) ===
+    const inner = new THREE.LineSegments(
+      new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.8,2)),
+      new THREE.LineBasicMaterial({ color: 0xff00ff })
+    );
+    const outer = new THREE.LineSegments(
+      new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(3.6,3)),
+      new THREE.LineBasicMaterial({ color: 0x00ffff })
+    );
+    scene.add(inner, outer);
+
+    // === Black hole lens quad ===
+    const rt = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
+    const warpScene = new THREE.Scene();
+    const warpCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    const warpMat = new THREE.ShaderMaterial({
+      uniforms: {
+        tDiffuse: { value: null },
+        strength: { value: 1.17 } // reduced by ~10%
+      },
+      vertexShader: `varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position,1.0);}`,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform float strength;
+        varying vec2 vUv;
+        void main(){
+          vec2 c = vec2(0.5);
+          vec2 d = vUv - c;
+          float r = length(d);
+          float horizon = 0.06; // black hole 50% smaller
+          float shell = smoothstep(horizon*1.70, horizon, r); // ring extended additional ~15% // ring extended additional ~15% // ring extended ~15% // ring 25% smaller // compressed by 50%
+          float warp = strength * shell / max(r, horizon);
+          vec2 uv = c + normalize(d) * (r - warp * 0.25);
+          vec4 col = texture2D(tDiffuse, uv);
+          col.rgb *= smoothstep(horizon*0.9, horizon, r);
+          gl_FragColor = col;
+        }
+      `
+    });
+
+    warpScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), warpMat));
+
+    let hue = 0;
+    function animate(){
+      camera.position.z += (targetZoom - camera.position.z) * 0.08;
+      points.rotation.y += 0.0008;
+      
+      // falling binary motion
+      binSprites.forEach(s => {
+        s.position.y -= s.userData.speed * 60 * 0.016;
+        if (s.position.y < -6) {
+          s.position.y = 6 + Math.random()*4;
+        }
+      });
+      inner.rotation.y += 0.001;
+      outer.rotation.x += 0.0008;
+
+      // rainbow shift wireframes
+      hue = (hue + 0.002) % 1;
+      inner.material.color.setHSL(hue, 1.0, 0.6);
+      outer.material.color.setHSL((hue + 0.5) % 1, 1.0, 0.6);
+
+      renderer.setRenderTarget(rt);
+      renderer.render(scene, camera);
+      renderer.setRenderTarget(null);
+
+      warpMat.uniforms.tDiffuse.value = rt.texture;
+      renderer.render(warpScene, warpCam);
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('resize', ()=>{
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
 </body>
 </html>

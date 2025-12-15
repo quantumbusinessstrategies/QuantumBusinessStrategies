@@ -26,44 +26,32 @@
       60% { color: #00ff00; } 80% { color: #ffff00; } 100% { color: #ff0000; }
     }
     .pixel-button {
-  font-size: 1.1em;
-  font-family: 'Silkscreen', monospace;
-  padding: 14px 28px;
-  background: #050505;
-  color: white;
-  cursor: pointer;
-  border: 2px solid transparent;
-  position: relative;
-  text-shadow: 0 0 6px rgba(255,255,255,0.6);
-  animation: pixelPulse 2.5s linear infinite;
-}
-.pixel-button::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, red, magenta, cyan, lime, yellow, red);
-  filter: blur(4px);
-  opacity: 0.8;
-  z-index: -1;
-  animation: rainbowTube 3s linear infinite;
-}
-.pixel-button:active {
-  transform: scale(0.9) rotate(-1deg);
-}
-@keyframes pixelPulse {
-  0%,100% { filter: brightness(1); }
-  50% { filter: brightness(1.6); }
-}
-@keyframes rainbowTube {
-  from { background-position: 0% 50%; }
-  to { background-position: 200% 50%; }
-}
-    #zoomControl {
-      position: absolute; bottom: 16px; right: 16px; z-index: 20;
-      background: rgba(0,0,0,0.45); padding: 10px; border-radius: 8px;
+      font-size: 1.1em;
+      font-family: 'Silkscreen', monospace;
+      padding: 14px 28px;
+      background: #050505;
+      color: white;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+      text-shadow: 0 0 6px rgba(255,255,255,0.6);
+      animation: pixelPulse 2.5s linear infinite;
     }
-    #hudWireframe{
+    .pixel-button::before {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, red, magenta, cyan, lime, yellow, red);
+      filter: blur(4px);
+      opacity: 0.8;
+      z-index: -1;
+      animation: rainbowTube 3s linear infinite;
+    }
+    .pixel-button:active { transform: scale(0.9) rotate(-1deg); }
+    @keyframes pixelPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.6); } }
+    @keyframes rainbowTube { from { background-position: 0% 50%; } to { background-position: 200% 50%; } }
+        #hudWireframe{
       position:absolute;
       top:16px;
       right:16px;
@@ -81,22 +69,24 @@
 <body>
   <div id="container">
     <div id="hudWireframe"></div>
-    <div id="zoomControl">
-      <label style="color:white;font-size:12px">ZOOM</label>
-      <input id="zoomSlider" type="range" min="3" max="14" step="0.1" value="6.4" />
-    </div>
+    
     <div id="title">QUANTUM BUSINESS STRATEGIES</div>
     <div id="buttons">
-      <button class="pixel-button">APPLY</button>
-      <button class="pixel-button">WHY</button>
-      <button class="pixel-button">INCORPORATE</button>
+      <button class="pixel-button" data-action="apply">APPLY</button>
+      <button class="pixel-button" data-action="why">WHY</button>
+      <button class="pixel-button" data-action="incorporate">INCORPORATE</button>
     </div>
   </div>
 
   <script type="module">
 import * as THREE from 'three';
 
-/* ================= HARD-SAFE FULL RESTORE ================= */
+/* ================= PERF-FIRST CLEAN BASELINE =================
+   Visual output preserved — allocations & overdraw reduced
+============================================================== */
+
+const DPR = Math.min(window.devicePixelRatio, 1.75); // hard cap
+
 const container = document.getElementById('container');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
@@ -104,20 +94,18 @@ scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 2000);
 camera.position.z = 6.4;
 
-let targetZoom = camera.position.z;
-document.getElementById('zoomSlider').addEventListener('input', e => {
-  targetZoom = parseFloat(e.target.value);
-});
+const LOCKED_ZOOM = 6.4;
+let targetZoom = LOCKED_ZOOM;
 
-const renderer = new THREE.WebGLRenderer({ antialias:true });
-renderer.setPixelRatio(devicePixelRatio);
+const renderer = new THREE.WebGLRenderer({ antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
+renderer.autoClear = true;
 container.appendChild(renderer.domElement);
 
-/* ================= GALAXY (OPTIMIZED) ================= */
-// Cut outer 10% of arms to reduce overdraw while preserving look
-const count = 18000; // reduced from 20000
-const maxRadius = 7.2 * 0.9; // trim outer arms
+/* ================= GALAXY (STATIC GEOMETRY) ================= */
+const count = 18000;
+const maxRadius = 7.2 * 0.9;
 const pos = new Float32Array(count * 3);
 const col = new Float32Array(count * 3);
 for (let i = 0; i < count; i++) {
@@ -128,9 +116,7 @@ for (let i = 0; i < count; i++) {
   pos[i3 + 1] = (Math.random() - 0.5) * 2;
   pos[i3 + 2] = Math.sin(a) * r;
   const c = new THREE.Color().setHSL(i / count, 1, 0.6);
-  col[i3]     = c.r;
-  col[i3 + 1] = c.g;
-  col[i3 + 2] = c.b;
+  col[i3] = c.r; col[i3 + 1] = c.g; col[i3 + 2] = c.b;
 }
 const galaxyGeo = new THREE.BufferGeometry();
 galaxyGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -143,222 +129,180 @@ const galaxyMat = new THREE.PointsMaterial({
   depthWrite: false
 });
 const galaxy = new THREE.Points(galaxyGeo, galaxyMat);
+galaxy.frustumCulled = false;
 scene.add(galaxy);
 
-/* ================= FALLING BINARY (LIGHTWEIGHT) ================= */
+/* ================= FALLING BINARY (CACHED TEXTURES) ================= */
 const binGroup = new THREE.Group();
 scene.add(binGroup);
+
 const binSprites = [];
-const BIN_COUNT = 540; // slight reduction for perf
-for (let i = 0; i < BIN_COUNT; i++) {
-  const c = document.createElement('canvas');
-  c.width = 32; c.height = 32;
-  const ctx = c.getContext('2d');
-  ctx.font = '24px monospace';
-  ctx.fillStyle = `hsl(${Math.random() * 360},100%,60%)`;
-  ctx.fillText(Math.random() > 0.5 ? '1' : '0', 4, 24);
-  const tex = new THREE.CanvasTexture(c);
-  const spr = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false })
-  );
-  spr.position.set((Math.random() - 0.5) * 12, Math.random() * 8 + 4, (Math.random() - 0.5) * 13);
+const binTextures = [];
+for(let i=0;i<12;i++){
+  const c=document.createElement('canvas'); c.width=32; c.height=32;
+  const ctx=c.getContext('2d'); ctx.font='24px monospace';
+  ctx.fillStyle=`hsl(${i*30},100%,60%)`; ctx.fillText(i%2?'1':'0',4,24);
+  binTextures.push(new THREE.CanvasTexture(c));
+}
+
+for (let i = 0; i < 540; i++) {
+  const tex = binTextures[i % binTextures.length];
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent:true, depthWrite:false }));
+  spr.position.set((Math.random()-0.5)*12, Math.random()*8+4, (Math.random()-0.5)*13);
   spr.scale.setScalar(0.32);
-  spr.userData.speed = 0.01 + Math.random() * 0.03;
+  spr.userData.speed = 0.01 + Math.random()*0.03;
   binGroup.add(spr);
   binSprites.push(spr);
 }
 
+/* ================= ELECTRONS (NO ALLOCATIONS PER FRAME) ================= */
+const electronGroup = new THREE.Group();
+scene.add(electronGroup);
 
-/* ================= ELECTRONS + COMET TRAILS ================= */
-const electronGroup=new THREE.Group(); scene.add(electronGroup);
-const electrons=[];
+const electrons = [];
+const sphereGeo = new THREE.SphereGeometry(0.09, 16, 16);
+const trailLen = 120;
+
 function createElectron(){
-  const mesh=new THREE.Mesh(new THREE.SphereGeometry(0.09,16,16),new THREE.MeshBasicMaterial({transparent:true}));
-  const len=120; const arr=new Float32Array(len*3);
-  const trailGeo=new THREE.BufferGeometry(); trailGeo.setAttribute('position',new THREE.BufferAttribute(arr,3));
-  const trail=new THREE.Line(trailGeo,new THREE.LineBasicMaterial({transparent:true,opacity:0.9,linewidth:2}));
-  electronGroup.add(mesh,trail);
-  return{mesh,trail,angle:Math.random()*Math.PI*2,speed:(0.004+Math.random()*0.01)*2.25,ecc:0.6+Math.random()*1.2,phase:Math.random()*Math.PI*2,timer:Math.random()*300};
+  const mesh = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({transparent:true}));
+  const arr = new Float32Array(trailLen * 3);
+  const trailGeo = new THREE.BufferGeometry();
+  trailGeo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+  const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({transparent:true,opacity:0.9}));
+  electronGroup.add(mesh, trail);
+  return {
+    mesh, trail,
+    angle: Math.random()*Math.PI*2,
+    speed: (0.004+Math.random()*0.01)*2.25,
+    ecc: 0.6+Math.random()*1.2,
+    phase: Math.random()*Math.PI*2,
+    timer: Math.random()*300
+  };
 }
 for(let i=0;i<6;i++) electrons.push(createElectron());
 
-/* ================= CENTRAL WIREFRAMES ================= */
-const inner=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.8,2)),new THREE.LineBasicMaterial());
-const outer=new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(3.6,3)),new THREE.LineBasicMaterial());
-scene.add(inner,outer);
+/* ================= WIREFRAMES ================= */
+const inner = new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(2.8,2)),
+  new THREE.LineBasicMaterial()
+);
+const outer = new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(3.6,3)),
+  new THREE.LineBasicMaterial()
+);
+inner.frustumCulled = outer.frustumCulled = false;
+scene.add(inner, outer);
 
-/* ================= BLACK HOLE — EXTREME RELATIVISTIC WARP ================= */
-// Absolute void core (camera-facing singularity)
+/* ================= BLACK HOLE ================= */
 const blackHole = new THREE.Mesh(
-  new THREE.SphereGeometry(0.9, 96, 96),
-  new THREE.MeshBasicMaterial({ color: 0x000000 })
+  new THREE.SphereGeometry(0.9, 64, 64),
+  new THREE.MeshBasicMaterial({ color:0x000000 })
 );
 scene.add(blackHole);
 
-// Spacetime lens shell — invisible geometry, distortion driver only
-const lensGeo = new THREE.SphereGeometry(3.4, 64, 64);
-const lensMat = new THREE.MeshBasicMaterial({ transparent:true, opacity:0.0 });
-const lens = new THREE.Mesh(lensGeo, lensMat);
-scene.add(lens);
+/* ================= HUD (LOW RES, LOW FPS) ================= */
+const hudScene = new THREE.Scene();
+const hudCam = new THREE.PerspectiveCamera(45,1,0.1,100);
+hudCam.position.z = 4.5;
+const hudGroup = new THREE.Group();
+hudScene.add(hudGroup);
 
-/* ================= HUD ================= */
-const hudScene=new THREE.Scene();
-const hudCam=new THREE.PerspectiveCamera(45,1,0.1,100); hudCam.position.z=4.5;
-const hudGroup=new THREE.Group(); hudScene.add(hudGroup);
-const mk=(s,o)=>new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.BoxGeometry(s,s,s,o,o,o)),new THREE.LineBasicMaterial({transparent:true,opacity:o/6}));
+const mk=(s,o)=>new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.BoxGeometry(s,s,s,o,o,o)),
+  new THREE.LineBasicMaterial({transparent:true,opacity:o/6})
+);
 hudGroup.add(mk(1.8,6),mk(1.35,4),mk(0.9,2));
-// ================= POSTPROCESS VOID WARP =================
-const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight);
-const warpScene = new THREE.Scene();
-const warpCam = new THREE.OrthographicCamera(-1,1,1,-1,0,1);
-const warpMat = new THREE.ShaderMaterial({
-  uniforms:{ tDiffuse:{value:null}, time:{value:0} },
-  vertexShader:`varying vec2 vUv; void main(){vUv=uv; gl_Position=vec4(position,1.0);}`,
-  fragmentShader:`
-    uniform sampler2D tDiffuse;
-    uniform float time;
-    varying vec2 vUv;
 
-    void main(){
-      vec2 c = vec2(0.5);
-      vec2 d = vUv - c;
-      float r = length(d);
-
-      // ABSOLUTE VOID CORE (small, guaranteed visible scene outside)
-      float horizon = 0.035;
-      if(r < horizon){
-        gl_FragColor = vec4(0.0,0.0,0.0,1.0);
-        return;
-      }
-
-      // DISTORTION BAND (edge interaction only)
-      float band = smoothstep(horizon, horizon + 0.06, r)
-                 * (1.0 - smoothstep(horizon + 0.06, horizon + 0.22, r));
-
-      float bend = 0.06 / max(r * 8.0, 0.45);
-      vec2 warped = c + normalize(d) * (r + bend * band);
-
-      // FAR-FIELD RIPPLE (very subtle)
-      float ripple = sin(time * 3.0 + r * 18.0) * 0.0018;
-      warped = c + normalize(warped - c) * (length(warped - c) + ripple);
-
-      // SAFETY CLAMP — prevents black sampling
-      warped = clamp(warped, vec2(0.001), vec2(0.999));
-
-      vec4 base = texture2D(tDiffuse, vUv);
-      vec4 warpedCol = texture2D(tDiffuse, warped);
-
-      // MIX so scene NEVER disappears
-      gl_FragColor = mix(base, warpedCol, band * 1.2);
-    }
-  `
-});
-warpScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2), warpMat));
-
-const hudRenderer=new THREE.WebGLRenderer({alpha:true,antialias:true}); hudRenderer.setSize(220,220);
+const hudRenderer = new THREE.WebGLRenderer({alpha:true, antialias:true});
+hudRenderer.setPixelRatio(1);
+hudRenderer.setSize(220,220);
 document.getElementById('hudWireframe').appendChild(hudRenderer.domElement);
 
-let hue=0;
+/* ================= BUTTON ROUTING (LIGHTWEIGHT & SAFE) ================= */
+const routes = {
+  apply: './apply.html',
+  why: './why.html',
+  incorporate: './incorporate.html'
+};
+
+let navigating = false;
+
+document.querySelectorAll('.pixel-button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(navigating) return;
+    navigating = true;
+
+    const action = btn.dataset.action;
+    const target = routes[action];
+
+    // subtle cinematic feedback without heavy cost
+    targetZoom = 3.8;
+    btn.style.filter = 'brightness(2)';
+
+    setTimeout(() => {
+      window.location.href = target;
+    }, 420); // short delay for feel, not lag
+  });
+});
+
+/* ================= MAIN LOOP ================= */
+let hue = 0;
+let hudFrame = 0;
+
 function animate(){
   requestAnimationFrame(animate);
 
-  // CAMERA
-  camera.position.z += (targetZoom - camera.position.z) * 0.08;
+  camera.position.z += (LOCKED_ZOOM - camera.position.z) * 0.08;
 
-  // GALAXY
   galaxy.rotation.y += 0.0008;
 
-  // FALLING BINARY
-  binSprites.forEach(s => {
+  for(const s of binSprites){
     s.position.y -= s.userData.speed;
-    if (s.position.y < -6) s.position.y = 6 + Math.random() * 4;
-  });
-
-  // ELECTRONS — SAFE, CLEAN LOOP
-  electrons.forEach(e => {
-    e.timer--;
-    if (e.timer < 0) {
-      e.timer = 200 + Math.random() * 280;
-      e.angle = Math.random() * Math.PI * 2;
-    }
-
-    if (e.timer < 80) {
-      e.mesh.visible = false;
-      e.trail.visible = false;
-      return;
-    }
-
-    e.mesh.visible = true;
-    e.trail.visible = true;
-    e.angle += e.speed;
-
-    const r = 3.8 + Math.sin(e.angle * e.ecc + e.phase) * 1.6;
-    let x = Math.cos(e.angle) * r;
-    let z = Math.sin(e.angle) * r;
-    let y = Math.sin(e.angle * 1.3) * 1.4;
-
-    const d = Math.sqrt(x * x + z * z);
-    if (d < 2.4) {
-      const ang = Math.atan2(z, x) + (2.4 - d) * 0.6;
-      const stretch = 1.0 + (2.4 - d) * 2.4;
-      x = Math.cos(ang) * 2.4 * stretch;
-      z = Math.sin(ang) * 2.4 * stretch;
-    }
-
-    e.mesh.position.set(x, y, z);
-    e.mesh.material.color.setHSL((hue + d * 0.15) % 1, 1, 0.7);
-
-    const arr = e.trail.geometry.attributes.position.array;
-    // QUICK-WRAP TRAIL SHIFT (faster than manual loop)
-    arr.copyWithin(3, 0, arr.length - 3);
-    arr[0] = x;
-    arr[1] = y;
-    arr[2] = z;
-    e.trail.geometry.attributes.position.needsUpdate = true;
-    e.trail.material.color.setHSL((hue + d * 0.25) % 1, 1, 0.6);
-  });
-
-  // WIREFRAMES
-  inner.rotation.y += 0.0025;
-  outer.rotation.x += 0.0021;
-  inner.material.color.setHSL(hue, 1, 0.6);
-  outer.material.color.setHSL((hue + 0.5) % 1, 1, 0.6);
-
-  // HUD HYPERCUBE
-  hudGroup.rotation.x += 0.004;
-  hudGroup.rotation.y += 0.006;
-  hudGroup.rotation.z += 0.002;
-  hudGroup.children.forEach((l, i) => {
-    l.material.color.setHSL((hue + i * 0.15) % 1, 1, 0.6);
-  });
-
-  // BLACK HOLE — PURE VOID (NO RING)
-  blackHole.scale.setScalar(1.0);
-
-  // POSTPROCESS
-  warpMat.uniforms.time.value += 0.016;
-  renderer.setRenderTarget(rt);
-  renderer.render(scene, camera);
-  renderer.setRenderTarget(null);
-  warpMat.uniforms.tDiffuse.value = rt.texture;
-  try{
-    renderer.render(warpScene, warpCam);
-  }catch(e){
-    // HARD FAILSAFE — raw scene if warp ever breaks
-    renderer.render(scene, camera);
+    if(s.position.y < -6) s.position.y = 6 + Math.random()*4;
   }
 
-  hudRenderer.render(hudScene, hudCam);
+  for(const e of electrons){
+    e.timer--;
+    if(e.timer < 0){ e.timer = 200 + Math.random()*280; e.angle = Math.random()*Math.PI*2; }
+    if(e.timer < 80){ e.mesh.visible = e.trail.visible = false; continue; }
+
+    e.mesh.visible = e.trail.visible = true;
+    e.angle += e.speed;
+
+    const r = 3.8 + Math.sin(e.angle*e.ecc + e.phase) * 1.6;
+    const x = Math.cos(e.angle) * r;
+    const z = Math.sin(e.angle) * r;
+    const y = Math.sin(e.angle*1.3) * 1.4;
+
+    e.mesh.position.set(x,y,z);
+
+    const arr = e.trail.geometry.attributes.position.array;
+    arr.copyWithin(3,0,arr.length-3);
+    arr[0]=x; arr[1]=y; arr[2]=z;
+    e.trail.geometry.attributes.position.needsUpdate = true;
+  }
+
+  inner.rotation.y += 0.0025;
+  outer.rotation.x += 0.0021;
+
+  renderer.render(scene, camera);
+
+  // HUD at ~30fps
+  if((hudFrame++ & 1) === 0){
+    hudGroup.rotation.x += 0.004;
+    hudGroup.rotation.y += 0.006;
+    hudGroup.rotation.z += 0.002;
+    hudRenderer.render(hudScene, hudCam);
+  }
 
   hue = (hue + 0.002) % 1;
 }
 animate();
 
 window.addEventListener('resize',()=>{
-  camera.aspect = innerWidth / innerHeight;
+  camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  rt.setSize(innerWidth, innerHeight);
 });
 </script>
 </body>
